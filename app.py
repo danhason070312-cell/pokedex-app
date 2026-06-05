@@ -12,7 +12,6 @@ regions = {
     "Sinnoh": (387, 493), "Unova": (494, 649), "Kalos": (650, 721), "Alola": (722, 809)
 }
 
-# טעינת שמות פוקימונים לחיפוש חכם
 @st.cache_data
 def get_pokemon_names():
     res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1300")
@@ -20,24 +19,13 @@ def get_pokemon_names():
 
 pokemon_names = get_pokemon_names()
 
-# תפריט ניווט
 menu = st.sidebar.radio("בחר:", ["פוקדקס", "מדריך גרגירים"])
 
 if menu == "פוקדקס":
-  # תיקון בטיחות להצגת תמונה
-            with c1:
-                # מנסים קודם תמונה רשמית, אם אין - מנסים תמונה רגילה (sprite)
-                img_url = data['sprites']['other']['official-artwork'].get('front_default')
-                if not img_url:
-                    img_url = data['sprites'].get('front_default')
-                
-                if img_url:
-                    st.image(img_url, width=300)
-                else:
-                    st.write("תמונה לא זמינה")
+    selected_region = st.selectbox("בחר מחוז:", list(regions.keys()))
+    user_input = st.text_input('חפש פוקימון (תיקון שגיאות פעיל):')
 
     if user_input:
-        # תיקון שגיאות כתיב
         match = difflib.get_close_matches(user_input.lower().strip(), pokemon_names, n=1, cutoff=0.3)
         name = match[0] if match else user_input.lower().strip()
         
@@ -46,22 +34,25 @@ if menu == "פוקדקס":
             data = res.json()
             species = requests.get(data['species']['url']).json()
             
-            # נתונים
             desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
             types = [t['type']['name'] for t in data['types']]
             food = "Berries" if "grass" in types else "Poffins" if "water" in types else "Fire-cooked food"
             
             c1, c2 = st.columns([1, 2])
             with c1:
-                st.image(data['sprites']['other']['official-artwork'].get('front_default'), width=300)
+                # מנגנון הגנה: בודק אם יש תמונה רשמית, אם לא - משתמש בסטנדרטית
+                official = data['sprites']['other']['official-artwork'].get('front_default')
+                standard = data['sprites'].get('front_default')
+                st.image(official if official else standard, width=300)
+                
             with c2:
                 st.subheader(f"פוקימון: {data['name'].upper()}")
                 st.write(f"**גובה:** {data['height']/10} מטרים")
                 st.write(f"**אוכל אהוב:** {food}")
                 st.write(f"**מידע:** {desc}")
-                st.image(data['sprites'].get('front_shiny'), width=150, caption="Shiny Form")
+                shiny = data['sprites'].get('front_shiny')
+                if shiny: st.image(shiny, width=150, caption="Shiny Form")
             
-            # אודיו אוטומטי
             tts = gTTS(text=f"{data['name']}. {desc}", lang='en', slow=False)
             tts.save("poke.mp3")
             st.audio("poke.mp3", autoplay=True)
@@ -73,8 +64,7 @@ if menu == "פוקדקס":
         for i in range(start, end + 1):
             with cols[(i - start) % 6]:
                 st.image(f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{i}.png")
-                p_res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{i}").json()
-                st.markdown(f"**#{i} {p_res['name'].capitalize()}**")
+                st.markdown(f"**#{i}**")
 
 elif menu == "מדריך גרגירים":
     st.header("🍎 מדריך גרגירים")
