@@ -13,14 +13,15 @@ pokemon_list = get_pokemon_list()
 
 st.title("🎤 Pokédex AI")
 
-# ניהול מצב התיבה
-if 'search_query' not in st.session_state:
-    st.session_state.search_query = ""
+# שימוש ב-Session State כדי לנהל את ה-Key של התיבה
+if 'input_key' not in st.session_state:
+    st.session_state.input_key = 0
 
 def clear_input():
-    st.session_state.search_query = ""
+    st.session_state.input_key += 1
 
-user_input = st.text_input('Search Pokemon:', key="input_field", value=st.session_state.search_query)
+# התיבה משתמשת ב-Key משתנה כדי להתאפס
+user_input = st.text_input('Search Pokemon:', key=f"input_{st.session_state.input_key}")
 
 if user_input:
     clean_input = user_input.lower().replace("tell me about", "").strip().replace(" ", "-")
@@ -44,7 +45,8 @@ if user_input:
         tts.save("pokedex.mp3")
         st.audio("pokedex.mp3")
         
-        # ניקוי התיבה מיד אחרי הצגת התוצאה
-        st.session_state.search_query = ""
+        # איפוס התיבה על ידי שינוי ה-Key
+        clear_input()
+        st.rerun() # גורם לדף להתרענן מיד עם תיבה ריקה
     else:
         st.error(f"Could not find {name}.")
