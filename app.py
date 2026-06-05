@@ -6,57 +6,75 @@ import difflib
 st.set_page_config(layout="wide")
 st.title("🎤 פוקדקס AI")
 
-# נתוני מחוזות וגרגירים
+# --- נתוני עזר ---
 regions = {
     "Kanto": (1, 151), "Johto": (152, 251), "Hoenn": (252, 386),
     "Sinnoh": (387, 493), "Unova": (494, 649), "Kalos": (650, 721), "Alola": (722, 809)
 }
 
 berries_data = {
-    "Oran Berry": {"Image": "https://raw.githubusercontent.com/PokeAPI/sprites/master/items/oran-berry.png", "Location": "מסלולים 102, 104", "Effect": "משחזר 10 HP", "Best For": "כל פוקימון"},
-    "Sitrus Berry": {"Image": "https://raw.githubusercontent.com/PokeAPI/sprites/master/items/sitrus-berry.png", "Location": "מסלולים 119, 123", "Effect": "משחזר רבע מה-HP", "Best For": "פוקימוני הגנה"}
+    "Oran Berry": {"Image": "https://raw.githubusercontent.com/PokeAPI/sprites/master/items/oran-berry.png", "Location": "מסלולים 102, 104, 111", "Effect": "משחזר 10 נקודות חיים (HP).", "Best For": "כל פוקימון שנפצע בקרב."},
+    "Sitrus Berry": {"Image": "https://raw.githubusercontent.com/PokeAPI/sprites/master/items/sitrus-berry.png", "Location": "מסלולים 119, 123", "Effect": "משחזר רבע מכמות החיים המקסימלית.", "Best For": "פוקימוני הגנה (Tanks) שצריכים הישרדות."},
+    "Lum Berry": {"Image": "https://raw.githubusercontent.com/PokeAPI/sprites/master/items/lum-berry.png", "Location": "מסלול 123", "Effect": "מרפא כל מצב סטטוס (הרעלה, שיתוק וכו').", "Best For": "פוקימונים רב-תכליתיים בקרבות."}
 }
 
-# תפריט צד - רק בשביל הגרגירים
-st.sidebar.header("עזרים")
-if st.sidebar.checkbox("הצג מדריך גרגירים"):
-    st.sidebar.subheader("🍎 מדריך גרגירים")
-    selected_berry = st.sidebar.selectbox("בחר גרגיר:", list(berries_data.keys()))
+# --- לוגיקה ---
+menu = st.sidebar.radio("בחר קטגוריה:", ["פוקדקס", "מדריך גרגירים"])
+
+if menu == "פוקדקס":
+    @st.cache_data
+    def get_pokemon_names():
+        res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1300")
+        return [p['name'] for p in res.json()['results']]
+
+    pokemon_names = get_pokemon_names()
+    selected_region = st.selectbox("בחר מחוז:", list(regions.keys()))
+    user_input = st.text_input('חפש פוקימון:')
+
+    if user_input:
+        match = difflib.get_close_matches(user_input.lower().strip(), pokemon_names, n=1, cutoff=0.3)
+        name = match[0] if match else user_input.lower().strip()
+        res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{name}")
+        
+        if res.status_code == 200:
+            data = res.json()
+            species = requests.get(data['species']['url']).json()
+            desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
+            types = [t['type']['name'] for t in data['types']]
+            food = "Berries" if "grass" in types else "Poffins" if "water" in types else "Fire-cooked food"
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                st.image(data['sprites']['other']['official-artwork']['front_default'] or data['sprites']['front_default'], width=300)
+            with c2:
+                st.subheader(f"פוקימון: {name.upper()}")
+                st.write(f"**גובה:** {data['height']/10} מטרים")
+                st.write(f"**אוכל אהוב:** {food}")
+                st.write(f"**מידע:** {desc}")
+                st.image(data['sprites']['front_shiny'], width=100, caption="Shiny Form")
+                
+                tts = gTTS(text=f"Pokemon {name}. {desc}", lang='en', slow=False)
+                tts.save("pokedex.mp3")
+                st.audio("pokedex.mp3")
+    else:
+        st.subheader(f"כל הפוקימונים במחוז {selected_region}:")
+        start_id, end_id = regions[selected_region]
+        cols = st.columns(6)
+        for i in range(start_id, end_id + 1):
+            with cols[(i - start_id) % 6]:
+                st.image(f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{i}.png", use_column_width=True)
+                st.markdown(f"**#{i}**")
+
+elif menu == "מדריך גרגירים":
+    st.header("🍎 מדריך גרגירים")
+    selected_berry = st.selectbox("בחר גרגיר:", list(berries_data.keys()))
     berry = berries_data[selected_berry]
-    st.sidebar.image(berry["Image"], width=100)
-    st.sidebar.write(f"**איפה גדל:** {berry['Location']}")
-    st.sidebar.write(f"**איך עוזר:** {berry['Effect']}")
-    st.sidebar.write(f"**מתאים ל:** {berry['Best For']}")
-    st.sidebar.markdown("---")
-
-# לוגיקת הפוקדקס (הכל נשאר אותו דבר)
-@st.cache_data
-def get_pokemon_names():
-    res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1300")
-    return [p['name'] for p in res.json()['results']]
-
-pokemon_names = get_pokemon_names()
-selected_region = st.selectbox("בחר מחוז:", list(regions.keys()))
-user_input = st.text_input('חפש פוקימון:')
-
-if user_input:
-    clean_input = user_input.lower().strip()
-    match = difflib.get_close_matches(clean_input, pokemon_names, n=1, cutoff=0.3)
-    name = match[0] if match else clean_input
     
-    res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{name}")
-    if res.status_code == 200:
-        data = res.json()
-        st.image(data['sprites']['other']['official-artwork']['front_default'] or data['sprites']['front_default'], width=300)
-        st.subheader(f"פוקימון: {name.upper()}")
-        st.write(f"**גובה:** {data['height']/10} מטרים")
-        st.image(data['sprites']['front_shiny'], width=150, caption="Shiny Form")
-else:
-    st.subheader(f"כל הפוקימונים במחוז {selected_region}:")
-    start_id, end_id = regions[selected_region]
-    cols = st.columns(6)
-    for i in range(start_id, end_id + 1):
-        with cols[(i - start_id) % 6]:
-            img_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{i}.png"
-            st.image(img_url, use_column_width=True)
-            st.markdown(f"**#{i}**")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.image(berry["Image"], width=200)
+    with col2:
+        st.write(f"### {selected_berry}")
+        st.write(f"**איפה גדל:** {berry['Location']}")
+        st.write(f"**איך עוזר:** {berry['Effect']}")
+        st.write(f"**מתאים ל:** {berry['Best For']}")
