@@ -43,8 +43,8 @@ if user_input:
         # הצגת האודיו עם autoplay (הדפדפן יפעיל אותו מייד בגלל הלחיצה על ה-input)
         st.audio("pokedex.mp3", autoplay=True)
         
-        # המתנה של 25 שניות ואז רענון של הדף לניקוי התיבה
-        time.sleep(25)
+        # המתנה של 17 שניות ואז רענון של הדף לניקוי התיבה
+        time.sleep(17)
         st.session_state.input_key += 1
         st.rerun()
         
