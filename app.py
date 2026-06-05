@@ -66,15 +66,10 @@ if menu == "פוקדקס":
 elif menu == "מדריך גרגירים":
     st.header("🍎 מדריך גרגירים")
     cols = st.columns(len(berries_data))
-    for i, (name, d) in enumerate(berries_data.items()):
-        with cols[i]:
-            try:
-                st.image(d["Img"], width=100)
-            except:
-                st.write("תמונה חסרה")
-            st.subheader(name)
-            if st.button(f"שמע על {name}", key=name):
-                tts = gTTS(text=f"{name} Berry. Effect: {d['Effect']}", lang='en')
-                tts.save("b.mp3")
-                st.audio("b.mp3", autoplay=True)
-            st.write(d["Effect"])
+  berries_data = {
+    "Oran": {"Img": "oran.png.png", "Effect": "משחזר 10 נקודות חיים (HP)."},
+    "Sitrus": {"Img": "sitrus.png.png", "Effect": "משחזר 25% מהחיים המקסימליים."},
+    "Lum": {"Img": "lum.png.png", "Effect": "מרפא כל סטטוס (הרעלה, שיתוק וכו')."},
+    "Cheri": {"Img": "cheri.png.png", "Effect": "מרפא שיתוק (Paralysis)."},
+    "Chesto": {"Img": "chesto.png.png", "Effect": "מעיר פוקימון שנרדם."}
+}
