@@ -41,24 +41,31 @@ if menu == "פוקדקס":
             data = res.json()
             species_data = requests.get(data['species']['url']).json()
             varieties = species_data.get('varieties', [])
-            
             desc = next((e['flavor_text'] for e in species_data['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
-            types = [t['type']['name'] for t in data['types']]
-            food = "פירות יער" if "grass" in types else ("פופינס" if "water" in types else "אוכל מבושל")
             
-            c1, c2 = st.columns([1, 2])
-            with c1:
-                st.subheader("כל הצורות:")
-                for v in varieties:
-                    v_res = requests.get(v['pokemon']['url']).json()
-                    img = v_res['sprites']['other']['official-artwork'].get('front_default')
-                    if img: st.image(img, width=200, caption=v['pokemon']['name'].replace('-', ' ').upper())
-            with c2:
-                st.subheader(f"פוקימון: {data['name'].upper()}")
-                st.write(f"**גובה:** {data['height']/10} מטרים")
-                st.write(f"**אוכל אהוב:** {food}")
-                st.write(f"**מידע:** {desc}")
+            st.subheader("כל הצורות של הפוקימון:")
+            for v in varieties:
+                v_res = requests.get(v['pokemon']['url']).json()
+                v_name = v['pokemon']['name'].replace('-', ' ').upper()
                 
+                # בדיקת סוג אוכל לפי טיפוס הצורה
+                types = [t['type']['name'] for t in v_res['types']]
+                food = "פירות יער" if "grass" in types else ("פופינס" if "water" in types else "אוכל מבושל")
+                
+                c1, c2 = st.columns([1, 2])
+                with c1:
+                    img = v_res['sprites']['other']['official-artwork'].get('front_default')
+                    if img: st.image(img, width=250, caption=f"{v_name} (רגיל)")
+                    
+                    shiny = v_res['sprites']['other']['official-artwork'].get('front_shiny')
+                    if shiny: st.image(shiny, width=250, caption=f"{v_name} (שייני)")
+                
+                with c2:
+                    st.subheader(f"צורת: {v_name}")
+                    st.write(f"**אוכל אהוב:** {food}")
+                    st.write(f"**מידע:** {desc}")
+                    st.divider()
+            
     else:
         st.subheader(f"מחוז {selected_region}")
         start, end = regions[selected_region]
