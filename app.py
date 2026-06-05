@@ -66,15 +66,15 @@ if menu == "פוקדקס":
                 st.markdown(f"**#{i}**")
 
 elif menu == "מדריך גרגירים":
-    st.header("🍎 מדריך גרגירים")
-    selected_berry = st.selectbox("בחר גרגיר:", list(berries_data.keys()))
-    berry = berries_data[selected_berry]
+    st.header("🍎 מדריך גרגירים מלא")
     
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.image(berry["Image"], width=200)
-    with col2:
-        st.write(f"### {selected_berry}")
-        st.write(f"**איפה גדל:** {berry['Location']}")
-        st.write(f"**איך עוזר:** {berry['Effect']}")
-        st.write(f"**מתאים ל:** {berry['Best For']}")
+    # הצגת כל הגרגירים בגלריה יפה
+    cols = st.columns(3)
+    for index, (name, details) in enumerate(berries_data.items()):
+        with cols[index % 3]:
+            st.image(details["Image"], width=120)
+            st.subheader(name)
+            with st.expander("לחץ לפרטים"):
+                st.write(f"**איפה גדל:** {details['Location']}")
+                st.write(f"**איך עוזר:** {details['Effect']}")
+                st.write(f"**מתאים ל:** {details['Best For']}")
