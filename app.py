@@ -27,10 +27,17 @@ if user_input:
     
     if res.status_code == 200:
         data = res.json()
+        
+        # --- תוספת: שליפת הכתובת של התמונה ---
+        image_url = data['sprites']['other']['official-artwork']['front_default']
+        
         species = requests.get(data['species']['url']).json()
         desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No data.")
         desc = desc.replace('\n', ' ').replace('\f', ' ')
         types = ", ".join([t['type']['name'] for t in data['types']])
+        
+        # הצגת התמונה
+        st.image(image_url, caption=name.upper(), width=300)
         
         st.subheader(f"POKÉDEX: {name.upper()}")
         st.write(f"**Type:** {types}")
@@ -40,11 +47,10 @@ if user_input:
         tts = gTTS(text=f"Pokemon {name}. Type {types}. {desc}", lang='en', tld='co.uk', slow=False)
         tts.save("pokedex.mp3")
         
-        # הצגת האודיו עם autoplay (הדפדפן יפעיל אותו מייד בגלל הלחיצה על ה-input)
         st.audio("pokedex.mp3", autoplay=True)
         
-        # המתנה של 25 שניות ואז רענון של הדף לניקוי התיבה
-        time.sleep(16)
+        # המתנה של 25 שניות ואז רענון
+        time.sleep(25)
         st.session_state.input_key += 1
         st.rerun()
         
