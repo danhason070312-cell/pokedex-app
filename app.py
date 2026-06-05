@@ -12,13 +12,13 @@ regions = {
     "Sinnoh": (387, 493), "Unova": (494, 649), "Kalos": (650, 721), "Alola": (722, 809)
 }
 
-# הוספתי כאן את שמות קבצי התמונה שהעלית (תצטרך לשמור אותם באותה תיקייה)
+# הגדרה פשוטה - ככה תראה איך זה עובד
 berries_data = {
-    "Oran": {"Img": "image_7115db.png", "Effect": "משחזר 10 נקודות חיים (HP) מיידית בקרב."},
-    "Sitrus": {"Img": "image_7118a5.png", "Effect": "משחזר 25% מהחיים המקסימליים של הפוקימון."},
-    "Lum": {"Img": "image_7118ff.png", "Effect": "מרפא כל בעיית סטטוס: שיתוק, הרעלה, שינה, כוויה או קיפאון."},
-    "Cheri": {"Img": "image_711939.png", "Effect": "מרפא שיתוק (Paralysis) ומחזיר את מהירות הפוקימון."},
-    "Chesto": {"Img": "image_711978.png", "Effect": "מעיר את הפוקימון מיד במקרה שהוא נרדם בקרב."}
+    "Oran": {"Img": "oran.png", "Effect": "משחזר 10 נקודות חיים (HP)."},
+    "Sitrus": {"Img": "sitrus.png", "Effect": "משחזר 25% מהחיים המקסימליים."},
+    "Lum": {"Img": "lum.png", "Effect": "מרפא כל סטטוס (הרעלה, שיתוק וכו')."},
+    "Cheri": {"Img": "cheri.png", "Effect": "מרפא שיתוק (Paralysis)."},
+    "Chesto": {"Img": "chesto.png", "Effect": "מעיר פוקימון שנרדם."}
 }
 
 @st.cache_data
@@ -40,9 +40,6 @@ if menu == "פוקדקס":
             data = res.json()
             species = requests.get(data['species']['url']).json()
             desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
-            types = [t['type']['name'] for t in data['types']]
-            food = "Berries" if "grass" in types else "Poffins" if "water" in types else "Fire-cooked food"
-            
             c1, c2 = st.columns([1, 2])
             with c1:
                 off = data['sprites']['other']['official-artwork'].get('front_default')
@@ -50,7 +47,6 @@ if menu == "פוקדקס":
             with c2:
                 st.subheader(f"פוקימון: {data['name'].upper()}")
                 st.write(f"**גובה:** {data['height']/10} מטרים")
-                st.write(f"**אוכל אהוב:** {food}")
                 st.write(f"**מידע:** {desc}")
                 if data['sprites'].get('front_shiny'): st.image(data['sprites'].get('front_shiny'), width=150, caption="Shiny Form")
             tts = gTTS(text=f"{data['name']}. {desc}", lang='en')
@@ -66,27 +62,19 @@ if menu == "פוקדקס":
                 p_res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{i}").json()
                 st.markdown(f"**{p_res['name'].capitalize()}**")
                 st.markdown(f"#{i}")
+
 elif menu == "מדריך גרגירים":
     st.header("🍎 מדריך גרגירים")
-    
-    # מיפוי השמות לקבצים שהעלית
-    berries_data = {
-        "Oran": {"Img": "image_7115db.png", "Effect": "משחזר 10 נקודות חיים (HP) מיידית."},
-        "Sitrus": {"Img": "image_7118a5.png", "Effect": "משחזר 25% מהחיים המקסימליים של הפוקימון."},
-        "Lum": {"Img": "image_7118ff.png", "Effect": "מרפא כל בעיית סטטוס: שיתוק, הרעלה, שינה, כוויה או קיפאון."},
-        "Cheri": {"Img": "image_711939.png", "Effect": "מרפא שיתוק (Paralysis)."},
-        "Chesto": {"Img": "image_711978.png", "Effect": "מעיר את הפוקימון מיד במקרה שנרדם."}
-    }
-    
-    # תצוגת הגרגירים בשורה אחת
     cols = st.columns(len(berries_data))
     for i, (name, d) in enumerate(berries_data.items()):
         with cols[i]:
-            st.image(d["Img"], width=100)
+            try:
+                st.image(d["Img"], width=100)
+            except:
+                st.write("תמונה חסרה")
             st.subheader(name)
-            st.write(d["Effect"])
-            # כפתור הקראה עם טקסט מפורט ומדויק
             if st.button(f"שמע על {name}", key=name):
-                tts = gTTS(text=f"{name} Berry effect is: {d['Effect']}", lang='en')
-                tts.save("temp_berry.mp3")
-                st.audio("temp_berry.mp3", autoplay=True)
+                tts = gTTS(text=f"{name} Berry. Effect: {d['Effect']}", lang='en')
+                tts.save("b.mp3")
+                st.audio("b.mp3", autoplay=True)
+            st.write(d["Effect"])
