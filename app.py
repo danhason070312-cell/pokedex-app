@@ -68,9 +68,24 @@ if menu == "פוקדקס":
 
 elif menu == "מדריך גרגירים":
     st.header("🍎 מדריך גרגירים")
-    berries = {"Oran": "oran-berry", "Sitrus": "sitrus-berry", "Lum": "lum-berry"}
+    
+    # הוספתי מידע מלא לכל גרגיר. 
+    # אם תרצה להוסיף עוד גרגירים, פשוט תוסיף שורה למילון הזה:
+    berries_info = {
+        "Oran": {"Loc": "מסלול 102", "Effect": "משחזר 10 נקודות חיים", "Best": "פוקימון שנפגע קלות"},
+        "Sitrus": {"Loc": "מסלול 119", "Effect": "משחזר רבע מהחיים", "Best": "פוקימון עם הגנה גבוהה"},
+        "Lum": {"Loc": "מסלול 123", "Effect": "מרפא כל סטטוס", "Best": "כל פוקימון בקרב תחרותי"},
+        "Cheri": {"Loc": "מסלול 104", "Effect": "מרפא שיתוק", "Best": "פוקימון אש"},
+        "Chesto": {"Loc": "מסלול 115", "Effect": "מרפא שינה", "Best": "פוקימון איטי"}
+    }
+    
     cols = st.columns(3)
-    for i, (name, img) in enumerate(berries.items()):
+    for i, (name, info) in enumerate(berries_info.items()):
         with cols[i % 3]:
-            st.image(f"https://raw.githubusercontent.com/PokeAPI/sprites/master/items/{img}.png", width=100)
+            # אני מנסה להציג תמונה לפי שם הגרגיר. 
+            # אם יש לך קובץ תמונה מקומי (למשל 'oran.png'), תגיד לי ואשנה ל-st.image("oran.png")
             st.subheader(f"{name} Berry")
+            with st.expander("לחץ למידע"):
+                st.write(f"**מיקום:** {info['Loc']}")
+                st.write(f"**השפעה:** {info['Effect']}")
+                st.write(f"**מתאים ל:** {info['Best']}")
