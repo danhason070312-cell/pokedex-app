@@ -24,8 +24,17 @@ pokemon_names = get_pokemon_names()
 menu = st.sidebar.radio("בחר:", ["פוקדקס", "מדריך גרגירים"])
 
 if menu == "פוקדקס":
-    selected_region = st.selectbox("בחר מחוז:", list(regions.keys()))
-    user_input = st.text_input('חפש פוקימון (תיקון שגיאות פעיל):')
+  # תיקון בטיחות להצגת תמונה
+            with c1:
+                # מנסים קודם תמונה רשמית, אם אין - מנסים תמונה רגילה (sprite)
+                img_url = data['sprites']['other']['official-artwork'].get('front_default')
+                if not img_url:
+                    img_url = data['sprites'].get('front_default')
+                
+                if img_url:
+                    st.image(img_url, width=300)
+                else:
+                    st.write("תמונה לא זמינה")
 
     if user_input:
         # תיקון שגיאות כתיב
