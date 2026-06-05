@@ -1,35 +1,47 @@
 import streamlit as st
 from gtts import gTTS
 import requests
+import difflib
 
 st.set_page_config(layout="wide")
 st.title("🎤 פוקדקס AI")
 
-# נתוני מחוזות
+# --- נתוני עזר ---
 regions = {
     "Kanto": (1, 151), "Johto": (152, 251), "Hoenn": (252, 386),
     "Sinnoh": (387, 493), "Unova": (494, 649), "Kalos": (650, 721), "Alola": (722, 809)
 }
+
+# טעינת שמות פוקימונים לחיפוש חכם
+@st.cache_data
+def get_pokemon_names():
+    res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1300")
+    return [p['name'] for p in res.json()['results']]
+
+pokemon_names = get_pokemon_names()
 
 # תפריט ניווט
 menu = st.sidebar.radio("בחר:", ["פוקדקס", "מדריך גרגירים"])
 
 if menu == "פוקדקס":
     selected_region = st.selectbox("בחר מחוז:", list(regions.keys()))
-    user_input = st.text_input('חפש פוקימון:')
+    user_input = st.text_input('חפש פוקימון (תיקון שגיאות פעיל):')
 
     if user_input:
-        res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{user_input.lower().strip()}")
+        # תיקון שגיאות כתיב
+        match = difflib.get_close_matches(user_input.lower().strip(), pokemon_names, n=1, cutoff=0.3)
+        name = match[0] if match else user_input.lower().strip()
+        
+        res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{name}")
         if res.status_code == 200:
             data = res.json()
             species = requests.get(data['species']['url']).json()
             
-            # שליפת נתונים
+            # נתונים
             desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
             types = [t['type']['name'] for t in data['types']]
             food = "Berries" if "grass" in types else "Poffins" if "water" in types else "Fire-cooked food"
             
-            # תצוגה
             c1, c2 = st.columns([1, 2])
             with c1:
                 st.image(data['sprites']['other']['official-artwork'].get('front_default'), width=300)
@@ -46,7 +58,6 @@ if menu == "פוקדקס":
             st.audio("poke.mp3", autoplay=True)
             
     else:
-        # גלריה קבועה
         st.subheader(f"מחוז {selected_region}")
         start, end = regions[selected_region]
         cols = st.columns(6)
