@@ -6,25 +6,33 @@ import difflib
 st.set_page_config(layout="wide")
 st.title("🎤 פוקדקס AI")
 
-# רשימת כל השמות לתיקון איות
-@st.cache_data
-def get_pokemon_names():
-    res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1300")
-    return [p['name'] for p in res.json()['results']]
-
-pokemon_names = get_pokemon_names()
-
-# הגדרת מחוזות
+# --- נתוני עזר ---
 regions = {
     "Kanto": (1, 151), "Johto": (152, 251), "Hoenn": (252, 386),
     "Sinnoh": (387, 493), "Unova": (494, 649), "Kalos": (650, 721), "Alola": (722, 809)
 }
 
-st.sidebar.header("בחר מחוז:")
-selected_region = st.sidebar.selectbox("מחוז:", list(regions.keys()))
-start_id, end_id = regions[selected_region]
+berries = {
+    "Oran Berry": {"Effect": "החזרת HP", "Best For": "כל פוקימון"},
+    "Sitrus Berry": {"Effect": "ריפוי משמעותי", "Best For": "פוקימוני הגנה"},
+    "Cheri Berry": {"Effect": "ריפוי שיתוק", "Best For": "פוקימוני אש/אדמה"},
+    "Persim Berry": {"Effect": "ריפוי בלבול", "Best For": "פוקימונים מהירים"},
+    "Lum Berry": {"Effect": "ריפוי כל סטטוס", "Best For": "פוקימונים רב-תכליתיים"}
+}
 
-# פונקציה לחישוב חולשות
+# --- תפריט צד ---
+st.sidebar.header("ניווט ומדריכים:")
+selected_region = st.sidebar.selectbox("בחר מחוז:", list(regions.keys()))
+st.sidebar.markdown("---")
+selected_berry = st.sidebar.selectbox("מדריך גרגירים:", list(berries.keys()))
+st.sidebar.info(f"**{selected_berry}**\n\n**השפעה:** {berries[selected_berry]['Effect']}\n**מתאים ל:** {berries[selected_berry]['Best For']}")
+
+# --- לוגיקה ---
+@st.cache_data
+def get_pokemon_names():
+    res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1300")
+    return [p['name'] for p in res.json()['results']]
+
 def get_weaknesses(types):
     weaknesses = set()
     for t in types:
@@ -33,8 +41,8 @@ def get_weaknesses(types):
             weaknesses.add(dmg['name'])
     return ", ".join(weaknesses)
 
-# חיפוש
-user_input = st.text_input('חפש פוקימון:')
+pokemon_names = get_pokemon_names()
+user_input = st.text_input('חפש פוקימון (תיקון אוטומטי פעיל):')
 
 if user_input:
     clean_input = user_input.lower().strip()
@@ -47,30 +55,33 @@ if user_input:
         data = res.json()
         species = requests.get(data['species']['url']).json()
         
-        # נתונים
         types = [t['type']['name'] for t in data['types']]
         desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
         weaknesses = get_weaknesses(types)
-        food = "Berries" if "grass" in types else "Poffins" if "water" in types else "Fire-cooked meat"
+        food = "Berries" if "grass" in types else "Poffins" if "water" in types else "Fire-cooked food"
         
-        # הצגה
-        st.image(data['sprites']['other']['official-artwork']['front_default'] or data['sprites']['front_default'], width=300)
-        st.subheader(f"פוקימון: {name.upper()}")
-        st.write(f"**מידע:** {desc}")
-        st.write(f"**גובה:** {data['height']/10} מטרים")
-        st.write(f"**אוכל אהוב:** {food}")
-        st.write(f"**סוגים אפקטיביים נגדו (חולשות):** {weaknesses}")
-        st.image(data['sprites']['front_shiny'], width=150, caption="Shiny Form")
-        
-        # אודיו
-        tts = gTTS(text=f"Pokemon {name}. {desc}", lang='en', slow=False)
-        tts.save("pokedex.mp3")
-        st.audio("pokedex.mp3", autoplay=True)
+        # תצוגת פוקימון שנמצא
+        c1, c2 = st.columns([1, 1])
+        with c1:
+            st.image(data['sprites']['other']['official-artwork']['front_default'] or data['sprites']['front_default'], width=350)
+        with c2:
+            st.subheader(name.upper())
+            st.write(f"**מידע:** {desc}")
+            st.write(f"**גובה:** {data['height']/10} מטרים")
+            st.write(f"**סוג:** {', '.join(types)}")
+            st.write(f"**חולשות:** {weaknesses}")
+            st.write(f"**אוכל אהוב:** {food}")
+            st.image(data['sprites']['front_shiny'], width=100, caption="Shiny Form")
+            
+            tts = gTTS(text=f"Pokemon {name}", lang='en', slow=False)
+            tts.save("p.mp3")
+            st.audio("p.mp3")
     else:
-        st.error("לא מצאתי.")
+        st.error("לא מצאתי את הפוקימון.")
 else:
     # תצוגת מחוז
     st.subheader(f"כל הפוקימונים במחוז {selected_region}:")
+    start_id, end_id = regions[selected_region]
     cols = st.columns(6)
     for i in range(start_id, end_id + 1):
         with cols[(i - start_id) % 6]:
