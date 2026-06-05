@@ -2,8 +2,8 @@ import streamlit as st
 from gtts import gTTS
 import requests
 import difflib
+import time
 
-# טעינת רשימת פוקימונים
 @st.cache_data
 def get_pokemon_list():
     all_pokemon = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1000").json()['results']
@@ -13,14 +13,9 @@ pokemon_list = get_pokemon_list()
 
 st.title("🎤 Pokédex AI")
 
-# שימוש ב-Session State כדי לנהל את ה-Key של התיבה
 if 'input_key' not in st.session_state:
     st.session_state.input_key = 0
 
-def clear_input():
-    st.session_state.input_key += 1
-
-# התיבה משתמשת ב-Key משתנה כדי להתאפס
 user_input = st.text_input('Search Pokemon:', key=f"input_{st.session_state.input_key}")
 
 if user_input:
@@ -41,12 +36,17 @@ if user_input:
         st.write(f"**Type:** {types}")
         st.write(f"**Info:** {desc}")
         
+        # יצירת האודיו
         tts = gTTS(text=f"Pokemon {name}. Type {types}. {desc}", lang='en', tld='co.uk', slow=False)
         tts.save("pokedex.mp3")
-        st.audio("pokedex.mp3")
         
-        # איפוס התיבה על ידי שינוי ה-Key
-        clear_input()
-        st.rerun() # גורם לדף להתרענן מיד עם תיבה ריקה
+        # הצגת האודיו עם autoplay (הדפדפן יפעיל אותו מייד בגלל הלחיצה על ה-input)
+        st.audio("pokedex.mp3", autoplay=True)
+        
+        # המתנה של 25 שניות ואז רענון של הדף לניקוי התיבה
+        time.sleep(25)
+        st.session_state.input_key += 1
+        st.rerun()
+        
     else:
         st.error(f"Could not find {name}.")
