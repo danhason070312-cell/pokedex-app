@@ -36,26 +36,29 @@ if menu == "פוקדקס":
         match = difflib.get_close_matches(user_input.lower().strip(), pokemon_names, n=1, cutoff=0.3)
         name = match[0] if match else user_input.lower().strip()
         res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{name}")
+        
         if res.status_code == 200:
             data = res.json()
-            species = requests.get(data['species']['url']).json()
-            desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
+            species_data = requests.get(data['species']['url']).json()
+            varieties = species_data.get('varieties', [])
+            
+            desc = next((e['flavor_text'] for e in species_data['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
             types = [t['type']['name'] for t in data['types']]
             food = "פירות יער" if "grass" in types else ("פופינס" if "water" in types else "אוכל מבושל")
             
             c1, c2 = st.columns([1, 2])
             with c1:
-                off = data['sprites']['other']['official-artwork'].get('front_default')
-                st.image(off if off else data['sprites'].get('front_default'), width=300)
-                if data['sprites'].get('front_shiny'): st.image(data['sprites'].get('front_shiny'), width=150, caption="Shiny Form")
+                st.subheader("כל הצורות:")
+                for v in varieties:
+                    v_res = requests.get(v['pokemon']['url']).json()
+                    img = v_res['sprites']['other']['official-artwork'].get('front_default')
+                    if img: st.image(img, width=200, caption=v['pokemon']['name'].replace('-', ' ').upper())
             with c2:
                 st.subheader(f"פוקימון: {data['name'].upper()}")
                 st.write(f"**גובה:** {data['height']/10} מטרים")
                 st.write(f"**אוכל אהוב:** {food}")
                 st.write(f"**מידע:** {desc}")
-                tts = gTTS(text=f"{data['name']}. {desc}", lang='en')
-                tts.save("p.mp3")
-                st.audio("p.mp3", autoplay=True)
+                
     else:
         st.subheader(f"מחוז {selected_region}")
         start, end = regions[selected_region]
