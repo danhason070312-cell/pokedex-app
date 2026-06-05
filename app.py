@@ -47,8 +47,6 @@ if menu == "פוקדקס":
             for v in varieties:
                 v_res = requests.get(v['pokemon']['url']).json()
                 v_name = v['pokemon']['name'].replace('-', ' ').upper()
-                
-                # בדיקת סוג אוכל לפי טיפוס הצורה
                 types = [t['type']['name'] for t in v_res['types']]
                 food = "פירות יער" if "grass" in types else ("פופינס" if "water" in types else "אוכל מבושל")
                 
@@ -56,7 +54,6 @@ if menu == "פוקדקס":
                 with c1:
                     img = v_res['sprites']['other']['official-artwork'].get('front_default')
                     if img: st.image(img, width=250, caption=f"{v_name} (רגיל)")
-                    
                     shiny = v_res['sprites']['other']['official-artwork'].get('front_shiny')
                     if shiny: st.image(shiny, width=250, caption=f"{v_name} (שייני)")
                 
@@ -64,6 +61,12 @@ if menu == "פוקדקס":
                     st.subheader(f"צורת: {v_name}")
                     st.write(f"**אוכל אהוב:** {food}")
                     st.write(f"**מידע:** {desc}")
+                    
+                    # הוספת כפתור להשמעת מידע על הצורה הספציפית
+                    if st.button(f"שמע על {v_name}", key=v_name):
+                        tts = gTTS(text=f"{v_name}. {desc}", lang='en')
+                        tts.save("p_voice.mp3")
+                        st.audio("p_voice.mp3", autoplay=True)
                     st.divider()
             
     else:
