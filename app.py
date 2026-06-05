@@ -1,18 +1,30 @@
 import streamlit as st
-from gtts import gTTS  # שים לב: gtts באותיות קטנות!
+from gtts import gTTS
 import requests
+import difflib
 
-# כותרת ראשית
+# 1. טעינת רשימת כל הפוקימונים (פעם אחת בלבד)
+@st.cache_data
+def get_pokemon_names():
+    res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1300")
+    return [p['name'] for p in res.json()['results']]
+
+pokemon_names = get_pokemon_names()
+
 st.title("🎤 פוקדקס AI")
 
-# תיבת חיפוש בראש העמוד
-user_input = st.text_input('חפש פוקימון (נסה mimikyu):')
+# 2. תיבת חיפוש בראש
+user_input = st.text_input('חפש פוקימון:')
 
-# מקום לתוצאות מתחת לתיבה
 results_placeholder = st.empty()
 
 if user_input:
-    name = user_input.lower().strip()
+    clean_input = user_input.lower().strip()
+    
+    # 3. מציאת השם הכי קרוב (זה הפתרון לאיות לא מדויק)
+    match = difflib.get_close_matches(clean_input, pokemon_names, n=1, cutoff=0.3)
+    name = match[0] if match else clean_input
+    
     # חיפוש ב-API
     res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{name}")
     
@@ -24,8 +36,8 @@ if user_input:
         desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
         desc = desc.replace('\n', ' ').replace('\f', ' ')
         types = ", ".join([t['type']['name'] for t in data['types']])
-        weight = data['weight'] / 10  # בקילוגרם
-        height = data['height'] / 10  # במטרים
+        weight = data['weight'] / 10
+        height = data['height'] / 10
         
         # תצוגה
         with results_placeholder.container():
@@ -36,9 +48,8 @@ if user_input:
             st.write(f"**משקל:** {weight} ק\"ג")
             st.write(f"**מידע:** {desc}")
             
-            # אודיו
-            tts = gTTS(text=f"Pokemon {data['name']}. Type {types}. {desc}", lang='en', slow=False)
+            tts = gTTS(text=f"Pokemon {data['name']}. {desc}", lang='en', slow=False)
             tts.save("pokedex.mp3")
             st.audio("pokedex.mp3", autoplay=True)
     else:
-        results_placeholder.error("לא מצאתי את הפוקימון. וודא איות!")
+        results_placeholder.error(f"לא מצאתי את הפוקימון {clean_input}. נסה שם אחר.")
