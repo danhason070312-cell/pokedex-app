@@ -1,49 +1,41 @@
 import streamlit as st
-from gtts import gTTS
 import requests
-import difflib
 
 st.title("🎤 פוקדקס AI")
 
-# רשימת שמות לתיקון איות
-@st.cache_data
-def get_pokemon_names():
-    res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=1300")
-    return [p['name'] for p in res.json()['results']]
-
-pokemon_names = get_pokemon_names()
-
-user_input = st.text_input('חפש פוקימון:')
-results_placeholder = st.empty()
-
-if user_input:
-    clean_input = user_input.lower().strip()
-    match = difflib.get_close_matches(clean_input, pokemon_names, n=1, cutoff=0.4)
-    name = match[0] if match else clean_input
-    
+# פונקציה להבאת פרטים בסיסיים
+def get_pokemon_info(name):
     res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{name}")
+    return res.json()
+
+# 1. תצוגת מסך הבית (כשהחיפוש ריק)
+def show_pokedex_grid():
+    st.subheader("פוקדקס - דפדוף מהיר:")
+    # מביא את 20 הפוקימונים הראשונים
+    res = requests.get("https://pokeapi.co/api/v2/pokemon?limit=20")
+    pokemon_list = res.json()['results']
     
+    cols = st.columns(4) # 4 עמודות בתצוגה
+    for i, p in enumerate(pokemon_list):
+        data = get_pokemon_info(p['name'])
+        with cols[i % 4]:
+            st.image(data['sprites']['front_default'], width=100)
+            st.write(f"#{data['id']} {data['name'].capitalize()}")
+
+# 2. לוגיקת החיפוש
+user_input = st.text_input('חפש פוקימון:')
+
+if not user_input:
+    show_pokedex_grid()
+else:
+    # כאן נכנסת הלוגיקה הקודמת שלך לחיפוש ספציפי
+    name = user_input.lower().strip()
+    res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{name}")
     if res.status_code == 200:
         data = res.json()
-        species = requests.get(data['species']['url']).json()
-        
-        # בחירת תמונה בבטחה - אם אין artwork, נשתמש ב-front_default
-        try:
-            image_url = data['sprites']['other']['official-artwork']['front_default']
-            if not image_url: raise Exception
-        except:
-            image_url = data['sprites']['front_default']
-            
-        desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
-        desc = desc.replace('\n', ' ').replace('\f', ' ')
-        
-        with results_placeholder.container():
-            st.image(image_url, width=300)
-            st.subheader(f"פוקימון: {name.upper()}")
-            st.write(f"**מידע:** {desc}")
-            
-            tts = gTTS(text=f"Pokemon {name}. {desc}", lang='en', slow=False)
-            tts.save("pokedex.mp3")
-            st.audio("pokedex.mp3", autoplay=True)
+        # כאן הצגת המידע המלא כולל Shiny (זמין ב-API תחת sprites.front_shiny)
+        st.image(data['sprites']['other']['official-artwork']['front_default'], width=300)
+        st.image(data['sprites']['front_shiny'], width=100, caption="Shiny Form")
+        st.write(f"**סוג:** {', '.join([t['type']['name'] for t in data['types']])}")
     else:
-        results_placeholder.error("לא נמצא.")
+        st.error("לא נמצא.")
