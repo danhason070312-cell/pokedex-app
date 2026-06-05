@@ -2,21 +2,15 @@ import streamlit as st
 from gtts import gTTS
 import requests
 import difflib
-from streamlit_mic_recorder import mic_recorder
-from googletrans import Translator
-
-# אתחול מתרגם
-translator = Translator()
+from deep_translator import GoogleTranslator
 
 st.title("🎤 פוקדקס AI בעברית")
 
-# תיבת חיפוש
 user_input = st.text_input('חפש פוקימון:')
 
 if user_input:
     clean_input = user_input.lower().replace("ספר לי על", "").strip().replace(" ", "-")
     
-    # חיפוש ב-API
     res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{clean_input}")
     
     if res.status_code == 200:
@@ -26,8 +20,8 @@ if user_input:
         # שליפת תיאור באנגלית
         desc_en = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No data.")
         
-        # תרגום לעברית
-        desc_he = translator.translate(desc_en, dest='he').text
+        # תרגום לעברית באמצעות deep-translator
+        desc_he = GoogleTranslator(source='en', target='he').translate(desc_en)
         types = ", ".join([t['type']['name'] for t in data['types']])
         
         # הצגת תוצאות
