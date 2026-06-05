@@ -131,29 +131,29 @@ if menu == "פוקדקס":
                 st.markdown(f"**#{i}**")
 
 
+# --- נתוני גרגירים מורחבים ---
+berries_data = {
+    "Oran": {"Img": "oran-berry", "Loc": "מסלולים 102, 104", "Effect": "משחזר 10 HP", "Best": "פוקימונים חלשים"},
+    "Sitrus": {"Img": "sitrus-berry", "Loc": "מסלולים 119, 123", "Effect": "משחזר 25% מה-HP", "Best": "פוקימוני הגנה"},
+    "Lum": {"Img": "lum-berry", "Loc": "מסלול 123", "Effect": "מרפא כל סטטוס", "Best": "פוקימונים רב-תכליתיים"},
+    "Cheri": {"Img": "cheri-berry", "Loc": "מסלולים 104, 115", "Effect": "מרפא שיתוק", "Best": "פוקימוני אש"},
+    "Chesto": {"Img": "chesto-berry", "Loc": "מסלולים 104, 115", "Effect": "מרפא שינה", "Best": "פוקימונים איטיים"},
+    "Pecha": {"Img": "pecha-berry", "Loc": "מסלולים 104, 112", "Effect": "מרפא הרעלה", "Best": "פוקימוני עשב"},
+    "Rawst": {"Img": "rawst-berry", "Loc": "מסלולים 104, 111", "Effect": "מרפא כוויה", "Best": "פוקימוני קרח"},
+    "Aspear": {"Img": "aspear-berry", "Loc": "מסלולים 104, 121", "Effect": "מרפא קיפאון", "Best": "פוקימוני אדמה"},
+    "Persim": {"Img": "persim-berry", "Loc": "מסלולים 104, 114", "Effect": "מרפא בלבול", "Best": "פוקימונים מהירים"}
+}
 
+# --- בתוך ה-elif menu == "מדריך גרגירים" ---
 elif menu == "מדריך גרגירים":
-
-    st.header("🍎 מדריך גרגירים")
-
-    selected_berry = st.selectbox("בחר גרגיר:", list(berries_data.keys()))
-
-    berry = berries_data[selected_berry]
-
-    
-
-    col1, col2 = st.columns([1, 2])
-
-    with col1:
-
-        st.image(berry["Image"], width=200)
-
-    with col2:
-
-        st.write(f"### {selected_berry}")
-
-        st.write(f"**איפה גדל:** {berry['Location']}")
-
-        st.write(f"**איך עוזר:** {berry['Effect']}")
-
-        st.write(f"**מתאים ל:** {berry['Best For']}")
+    st.header("🍎 מדריך גרגירים מלא")
+    cols = st.columns(3)
+    for i, (name, d) in enumerate(berries_data.items()):
+        with cols[i % 3]:
+            img_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/items/{d['Img']}.png"
+            st.image(img_url, width=100)
+            st.subheader(f"{name} Berry")
+            with st.expander("ראה פרטים"):
+                st.write(f"**איפה גדל:** {d['Loc']}")
+                st.write(f"**אפקט:** {d['Effect']}")
+                st.write(f"**מתאים ל:** {d['Best']}")
