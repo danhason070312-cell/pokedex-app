@@ -1,57 +1,62 @@
 import streamlit as st
 from gtts import gTTS
 import requests
+import difflib
 
 st.set_page_config(layout="wide")
 st.title("🎤 פוקדקס AI")
 
-# --- הגדרת טאבים לניווט קבוע ---
+# נתוני מחוזות
+regions = {
+    "Kanto": (1, 151), "Johto": (152, 251), "Hoenn": (252, 386),
+    "Sinnoh": (387, 493), "Unova": (494, 649), "Kalos": (650, 721), "Alola": (722, 809)
+}
+
+# טאבים לניווט
 tab1, tab2 = st.tabs(["פוקדקס", "מדריך גרגירים"])
 
 with tab1:
+    selected_region = st.selectbox("בחר מחוז:", list(regions.keys()))
     user_input = st.text_input('חפש פוקימון (למשל: charizard):')
-    
+
     if user_input:
+        # לוגיקת חיפוש
         res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{user_input.lower().strip()}")
         if res.status_code == 200:
             data = res.json()
-            
-            # שליפת מידע מורחב (Species)
-            species_res = requests.get(data['species']['url']).json()
-            # חיפוש תיאור באנגלית
-            desc = "No description available."
-            for entry in species_res.get('flavor_text_entries', []):
-                if entry['language']['name'] == 'en':
-                    desc = entry['flavor_text']
-                    break
-            
-            # חישוב אוכל אהוב (לפי סוג)
+            species = requests.get(data['species']['url']).json()
+            desc = next((e['flavor_text'] for e in species['flavor_text_entries'] if e['language']['name'] == 'en'), "No info.")
             types = [t['type']['name'] for t in data['types']]
-            food = "Berries" if "grass" in types else "Fire-cooked food" if "fire" in types else "Poffins"
+            food = "Berries" if "grass" in types else "Poffins" if "water" in types else "Fire-cooked food"
             
-            # הצגת הנתונים עם הגנה
-            col1, col2 = st.columns([1, 2])
-            with col1:
-                img = data['sprites']['other']['official-artwork'].get('front_default')
-                if img: st.image(img, width=300)
-            with col2:
+            c1, c2 = st.columns([1, 2])
+            with c1:
+                st.image(data['sprites']['other']['official-artwork'].get('front_default'), width=300)
+            with c2:
                 st.subheader(data['name'].upper())
                 st.write(f"**גובה:** {data['height']/10} מטרים")
                 st.write(f"**אוכל אהוב:** {food}")
                 st.write(f"**מידע:** {desc}")
-                
-                # צורת שייני
-                shiny = data['sprites'].get('front_shiny')
-                if shiny:
-                    st.image(shiny, width=100, caption="Shiny Form")
+                if data['sprites'].get('front_shiny'):
+                    st.image(data['sprites']['front_shiny'], width=100, caption="Shiny Form")
             
             # אודיו אוטומטי
             tts = gTTS(text=f"{data['name']}. {desc}", lang='en')
             tts.save("p.mp3")
             st.audio("p.mp3", autoplay=True)
-        else:
-            st.error("הפוקימון לא נמצא, נסה שם אחר.")
+    else:
+        # גלריה של כל המחוז
+        st.subheader(f"כל הפוקימונים במחוז {selected_region}:")
+        start, end = regions[selected_region]
+        cols = st.columns(6)
+        for i in range(start, end + 1):
+            with cols[(i - start) % 6]:
+                img_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{i}.png"
+                st.image(img_url)
+                # שליפת שם להצגה מתחת לתמונה
+                p_res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{i}").json()
+                st.markdown(f"**#{i} {p_res['name'].capitalize()}**")
 
 with tab2:
     st.subheader("🍎 מדריך גרגירים")
-    # כאן תוכל להוסיף את רשימת הגרגירים שלך כפי שהיה
+    # כאן יופיע מדריך הגרגירים שלך
