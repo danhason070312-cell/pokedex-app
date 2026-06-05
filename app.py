@@ -66,16 +66,27 @@ if menu == "פוקדקס":
                 p_res = requests.get(f"https://pokeapi.co/api/v2/pokemon/{i}").json()
                 st.markdown(f"**{p_res['name'].capitalize()}**")
                 st.markdown(f"#{i}")
-
 elif menu == "מדריך גרגירים":
     st.header("🍎 מדריך גרגירים")
+    
+    # מיפוי השמות לקבצים שהעלית
+    berries_data = {
+        "Oran": {"Img": "image_7115db.png", "Effect": "משחזר 10 נקודות חיים (HP) מיידית."},
+        "Sitrus": {"Img": "image_7118a5.png", "Effect": "משחזר 25% מהחיים המקסימליים של הפוקימון."},
+        "Lum": {"Img": "image_7118ff.png", "Effect": "מרפא כל בעיית סטטוס: שיתוק, הרעלה, שינה, כוויה או קיפאון."},
+        "Cheri": {"Img": "image_711939.png", "Effect": "מרפא שיתוק (Paralysis)."},
+        "Chesto": {"Img": "image_711978.png", "Effect": "מעיר את הפוקימון מיד במקרה שנרדם."}
+    }
+    
+    # תצוגת הגרגירים בשורה אחת
     cols = st.columns(len(berries_data))
     for i, (name, d) in enumerate(berries_data.items()):
         with cols[i]:
             st.image(d["Img"], width=100)
             st.subheader(name)
-            if st.button(f"הקש להקראה", key=name):
-                tts = gTTS(text=f"{name} Berry. Effect: {d['Effect']}", lang='en')
-                tts.save("b.mp3")
-                st.audio("b.mp3", autoplay=True)
             st.write(d["Effect"])
+            # כפתור הקראה עם טקסט מפורט ומדויק
+            if st.button(f"שמע על {name}", key=name):
+                tts = gTTS(text=f"{name} Berry effect is: {d['Effect']}", lang='en')
+                tts.save("temp_berry.mp3")
+                st.audio("temp_berry.mp3", autoplay=True)
