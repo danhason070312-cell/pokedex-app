@@ -67,25 +67,27 @@ if menu == "פוקדקס":
                 st.markdown(f"**#{i}**")
 
 elif menu == "מדריך גרגירים":
-    st.header("🍎 מדריך גרגירים")
+    st.header("🍎 מדריך גרגירים מורחב")
     
-    # הוספתי מידע מלא לכל גרגיר. 
-    # אם תרצה להוסיף עוד גרגירים, פשוט תוסיף שורה למילון הזה:
+    # מאגר גרגירים מעודכן עם מיקומים (מסלולים), אקלים והקראה
     berries_info = {
-        "Oran": {"Loc": "מסלול 102", "Effect": "משחזר 10 נקודות חיים", "Best": "פוקימון שנפגע קלות"},
-        "Sitrus": {"Loc": "מסלול 119", "Effect": "משחזר רבע מהחיים", "Best": "פוקימון עם הגנה גבוהה"},
-        "Lum": {"Loc": "מסלול 123", "Effect": "מרפא כל סטטוס", "Best": "כל פוקימון בקרב תחרותי"},
-        "Cheri": {"Loc": "מסלול 104", "Effect": "מרפא שיתוק", "Best": "פוקימון אש"},
-        "Chesto": {"Loc": "מסלול 115", "Effect": "מרפא שינה", "Best": "פוקימון איטי"}
+        "Oran": {"Loc": "מסלולים 102, 104, 111", "Climate": "אקלים ממוזג", "Effect": "משחזר 10 HP", "Best": "פוקימון שנפגע קלות"},
+        "Sitrus": {"Loc": "מסלולים 119, 123", "Climate": "אקלים לח וטרופי", "Effect": "משחזר רבע מה-HP", "Best": "פוקימון הגנה"},
+        "Lum": {"Loc": "מסלול 123", "Climate": "אקלים הררי גבוה", "Effect": "מרפא כל בעיה", "Best": "כל פוקימון"},
+        "Cheri": {"Loc": "מסלולים 104, 115", "Climate": "אקלים שמש חזק", "Effect": "מרפא שיתוק", "Best": "פוקימון אש"}
     }
     
-    cols = st.columns(3)
-    for i, (name, info) in enumerate(berries_info.items()):
-        with cols[i % 3]:
-            # אני מנסה להציג תמונה לפי שם הגרגיר. 
-            # אם יש לך קובץ תמונה מקומי (למשל 'oran.png'), תגיד לי ואשנה ל-st.image("oran.png")
-            st.subheader(f"{name} Berry")
-            with st.expander("לחץ למידע"):
-                st.write(f"**מיקום:** {info['Loc']}")
-                st.write(f"**השפעה:** {info['Effect']}")
-                st.write(f"**מתאים ל:** {info['Best']}")
+    selected = st.selectbox("בחר גרגיר למידע והקלטה:", list(berries_info.keys()))
+    info = berries_info[selected]
+    
+    # תצוגה
+    st.write(f"**מיקום:** {info['Loc']} (אלו המספרים של המסלולים שבהם אפשר למצוא אותם בעולם המשחק)")
+    st.write(f"**אקלים:** {info['Climate']}")
+    st.write(f"**השפעה:** {info['Effect']}")
+    st.write(f"**מתאים ל:** {info['Best']}")
+    
+    # הקלטה אוטומטית לגרגיר
+    tts_text = f"{selected} Berry. Found in {info['Loc']}. Climate: {info['Climate']}. Effect: {info['Effect']}"
+    tts = gTTS(text=tts_text, lang='en')
+    tts.save("berry.mp3")
+    st.audio("berry.mp3", autoplay=True)
